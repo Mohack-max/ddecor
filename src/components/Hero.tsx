@@ -1,15 +1,11 @@
-
 import React from 'react';
 import { Button } from './ui/button';
 import { Link } from 'react-router-dom';
-
 const Hero: React.FC = () => {
-  return (
-    <div className="relative h-[80vh] w-full overflow-hidden">
-      <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2070&auto=format&fit=crop)' }}
-      >
+  return <div className="relative h-[80vh] w-full overflow-hidden">
+      <div className="absolute inset-0 bg-cover bg-center" style={{
+      backgroundImage: 'url(https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2070&auto=format&fit=crop)'
+    }}>
         <div className="absolute inset-0 hero-gradient"></div>
       </div>
       
@@ -28,15 +24,13 @@ const Hero: React.FC = () => {
               </Button>
             </Link>
             <Link to="/design">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20">
+              <Button size="lg" variant="outline" className="border-white hover:bg-white/20 text-orange-300">
                 Design Your Space
               </Button>
             </Link>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Hero;
