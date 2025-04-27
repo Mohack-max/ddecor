@@ -114,19 +114,19 @@ const Buy = () => {
 
   // Filter states
   const [priceRange, setPriceRange] = useState([0, 6000000]);
-  const [propertyType, setPropertyType] = useState<string>("");
+  const [propertyType, setPropertyType] = useState<string | null>(null);
   const [location, setLocation] = useState<string>("");
-  const [bedrooms, setBedrooms] = useState<string>("");
-  const [bathrooms, setBathrooms] = useState<string>("");
+  const [bedrooms, setBedrooms] = useState<string | null>(null);
+  const [bathrooms, setBathrooms] = useState<string | null>(null);
 
   // Apply filters
   const filteredProperties = allProperties.filter(property => {
     const matchesPrice = property.price >= priceRange[0] && property.price <= priceRange[1];
-    const matchesType = propertyType === "" || property.type === propertyType;
+    const matchesType = propertyType === null || property.type === propertyType;
     const matchesLocation = location === "" || property.location.includes(location);
-    const matchesBedrooms = bedrooms === "" || 
+    const matchesBedrooms = bedrooms === null || 
       (property.bedrooms && property.bedrooms >= parseInt(bedrooms));
-    const matchesBathrooms = bathrooms === "" || 
+    const matchesBathrooms = bathrooms === null || 
       (property.bathrooms && property.bathrooms >= parseInt(bathrooms));
     
     return matchesPrice && matchesType && matchesLocation && matchesBedrooms && matchesBathrooms;
@@ -198,12 +198,11 @@ const Buy = () => {
                 <AccordionItem value="type">
                   <AccordionTrigger>Property Type</AccordionTrigger>
                   <AccordionContent>
-                    <Select value={propertyType} onValueChange={setPropertyType}>
+                    <Select value={propertyType || undefined} onValueChange={setPropertyType}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="All Types" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Types</SelectItem>
                         <SelectItem value="Villa">Villa</SelectItem>
                         <SelectItem value="House">House</SelectItem>
                         <SelectItem value="Flat">Flat</SelectItem>
@@ -234,12 +233,11 @@ const Buy = () => {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="bedrooms">Bedrooms (min)</Label>
-                        <Select value={bedrooms} onValueChange={setBedrooms}>
+                        <Select value={bedrooms || undefined} onValueChange={setBedrooms}>
                           <SelectTrigger id="bedrooms" className="w-full">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Any</SelectItem>
                             <SelectItem value="1">1+</SelectItem>
                             <SelectItem value="2">2+</SelectItem>
                             <SelectItem value="3">3+</SelectItem>
@@ -251,12 +249,11 @@ const Buy = () => {
                       
                       <div className="space-y-2">
                         <Label htmlFor="bathrooms">Bathrooms (min)</Label>
-                        <Select value={bathrooms} onValueChange={setBathrooms}>
+                        <Select value={bathrooms || undefined} onValueChange={setBathrooms}>
                           <SelectTrigger id="bathrooms" className="w-full">
                             <SelectValue placeholder="Any" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Any</SelectItem>
                             <SelectItem value="1">1+</SelectItem>
                             <SelectItem value="2">2+</SelectItem>
                             <SelectItem value="3">3+</SelectItem>
@@ -275,10 +272,10 @@ const Buy = () => {
                   variant="outline"
                   onClick={() => {
                     setPriceRange([0, 6000000]);
-                    setPropertyType("");
+                    setPropertyType(null);
                     setLocation("");
-                    setBedrooms("");
-                    setBathrooms("");
+                    setBedrooms(null);
+                    setBathrooms(null);
                   }}
                 >
                   Reset Filters
