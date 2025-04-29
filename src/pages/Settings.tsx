@@ -41,6 +41,9 @@ const Settings = () => {
     updates: true
   });
   const [darkMode, setDarkMode] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Load profile data
   useEffect(() => {
@@ -55,11 +58,26 @@ const Settings = () => {
   useEffect(() => {
     if (!loading && !user) {
       navigate('/');
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to access settings.",
+        variant: "destructive"
+      });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, toast]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "You must be logged in to update your profile.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSaving(true);
     
     try {
@@ -70,12 +88,12 @@ const Settings = () => {
           phone: phone,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user?.id);
+        .eq('id', user.id);
         
       if (error) throw error;
       
       // Update email if changed
-      if (email !== user?.email) {
+      if (email !== user.email) {
         const { error: updateError } = await supabase.auth.updateUser({ email });
         if (updateError) throw updateError;
       }
@@ -97,12 +115,94 @@ const Settings = () => {
     }
   };
 
-  const handleSavePreferences = (e: React.FormEvent) => {
+  const handleSavePreferences = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // In a real application, you would save these preferences to the database
+    // For now, we'll just show a toast message
     toast({
       title: "Preferences saved",
       description: "Your preferences have been updated successfully."
     });
+  };
+  
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) return;
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords do not match",
+        description: "Your new password and confirmation password do not match.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({ 
+        password: newPassword 
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Password updated",
+        description: "Your password has been updated successfully."
+      });
+      
+      // Clear password fields
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      toast({
+        title: "Error updating password",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    
+    // This would typically involve a confirmation dialog first
+    const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+    
+    if (!confirmDelete) return;
+    
+    setIsSaving(true);
+    
+    try {
+      // This will trigger cascade deletion of profiles due to our setup
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      
+      if (error) throw error;
+      
+      // Sign out the user
+      await supabase.auth.signOut();
+      
+      toast({
+        title: "Account deleted",
+        description: "Your account has been deleted successfully."
+      });
+      
+      navigate('/');
+    } catch (error: any) {
+      toast({
+        title: "Error deleting account",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (loading) {
@@ -281,8 +381,17 @@ const Settings = () => {
                   </div>
                   
                   <div className="flex justify-end">
-                    <Button type="submit" className="bg-decor-gold hover:bg-decor-gold/90">
-                      Save Preferences
+                    <Button 
+                      type="submit" 
+                      className="bg-decor-gold hover:bg-decor-gold/90"
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : 'Save Preferences'}
                     </Button>
                   </div>
                 </form>
@@ -297,21 +406,45 @@ const Settings = () => {
                 <div className="space-y-6">
                   <div>
                     <h3 className="mb-3 text-xl font-semibold">Change Password</h3>
-                    <form className="space-y-4">
+                    <form onSubmit={handleUpdatePassword} className="space-y-4">
                       <div className="grid gap-2">
                         <Label htmlFor="current-password">Current Password</Label>
-                        <Input id="current-password" type="password" />
+                        <Input 
+                          id="current-password" 
+                          type="password" 
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                        />
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="new-password">New Password</Label>
-                        <Input id="new-password" type="password" />
+                        <Input 
+                          id="new-password" 
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                        />
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="confirm-password">Confirm New Password</Label>
-                        <Input id="confirm-password" type="password" />
+                        <Input 
+                          id="confirm-password" 
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
                       </div>
-                      <Button className="bg-decor-gold hover:bg-decor-gold/90">
-                        Update Password
+                      <Button 
+                        type="submit"
+                        className="bg-decor-gold hover:bg-decor-gold/90"
+                        disabled={isSaving || !newPassword || newPassword !== confirmPassword}
+                      >
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Updating...
+                          </>
+                        ) : 'Update Password'}
                       </Button>
                     </form>
                   </div>
@@ -377,7 +510,18 @@ const Settings = () => {
                   
                   <div>
                     <h3 className="mb-3 text-xl font-medium text-destructive">Danger Zone</h3>
-                    <Button variant="destructive">Delete Account</Button>
+                    <Button 
+                      variant="destructive"
+                      onClick={handleDeleteAccount}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : 'Delete Account'}
+                    </Button>
                   </div>
                 </div>
               </div>

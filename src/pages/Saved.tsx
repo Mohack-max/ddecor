@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PropertyCard, { Property } from '@/components/PropertyCard';
@@ -7,89 +9,184 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 const Saved = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('favorites');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [savedProperties, setSavedProperties] = useState<Property[]>([]);
-  
-  // Mock data for saved properties
-  const mockSavedProperties: Property[] = [
-    {
-      id: '1',
-      title: 'Luxury Oceanfront Villa',
-      type: 'Villa',
-      location: 'Malibu, CA',
-      price: 4500000,
-      bedrooms: 5,
-      bathrooms: 6,
-      area: 4200,
-      imageUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop'
-    },
-    {
-      id: '3',
-      title: 'Countryside Estate',
-      type: 'House',
-      location: 'Hamptons, NY',
-      price: 3750000,
-      bedrooms: 6,
-      bathrooms: 5,
-      area: 5800,
-      imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070&auto=format&fit=crop'
-    },
-  ];
+  const [recentViews, setRecentViews] = useState<Property[]>([]);
 
-  const mockRecentViews: Property[] = [
-    {
-      id: '2',
-      title: 'Modern Downtown Flat',
-      type: 'Flat',
-      location: 'New York, NY',
-      price: 1950000,
-      bedrooms: 2,
-      bathrooms: 2,
-      area: 1200,
-      imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop'
-    },
-    {
-      id: '5',
-      title: 'Mountain View Chalet',
-      type: 'House',
-      location: 'Aspen, CO',
-      price: 2800000,
-      bedrooms: 4,
-      bathrooms: 3,
-      area: 3200,
-      imageUrl: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=2065&auto=format&fit=crop'
-    },
-  ];
-
+  // Load saved properties from Supabase
   useEffect(() => {
-    // Simulate checking if user is logged in
-    const checkLoginStatus = () => {
-      // In a real app, this would check auth state
-      setIsLoggedIn(true); // For demo, we'll assume logged in
+    const fetchSavedProperties = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
       
-      // Load saved properties
-      if (activeTab === 'favorites') {
-        setSavedProperties(mockSavedProperties);
-      } else {
-        setSavedProperties(mockRecentViews);
+      setIsLoading(true);
+      
+      try {
+        if (activeTab === 'favorites') {
+          // Fetch saved properties
+          const { data, error } = await supabase
+            .from('saved_properties')
+            .select(`
+              property_id,
+              property_listings (*)
+            `)
+            .eq('user_id', user.id);
+            
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            // Transform to Property type
+            const mappedProperties = data.map((item: any) => ({
+              id: item.property_listings.id,
+              title: item.property_listings.title,
+              type: item.property_listings.property_type,
+              location: item.property_listings.location,
+              price: item.property_listings.price,
+              bedrooms: item.property_listings.bedrooms,
+              bathrooms: item.property_listings.bathrooms,
+              area: item.property_listings.area,
+              imageUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop'
+            }));
+            
+            setSavedProperties(mappedProperties);
+          } else {
+            setSavedProperties([]);
+          }
+        } else {
+          // In a real app, you'd fetch recently viewed properties from a database table
+          // For demo purposes, we'll use mockRecentViews
+          const mockRecentViews: Property[] = [
+            {
+              id: '2',
+              title: 'Modern Downtown Flat',
+              type: 'Flat',
+              location: 'New York, NY',
+              price: 1950000,
+              bedrooms: 2,
+              bathrooms: 2,
+              area: 1200,
+              imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop'
+            },
+            {
+              id: '5',
+              title: 'Mountain View Chalet',
+              type: 'House',
+              location: 'Aspen, CO',
+              price: 2800000,
+              bedrooms: 4,
+              bathrooms: 3,
+              area: 3200,
+              imageUrl: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=2065&auto=format&fit=crop'
+            },
+          ];
+          
+          setRecentViews(mockRecentViews);
+        }
+      } catch (error) {
+        console.error('Error fetching saved properties:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load saved properties.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    checkLoginStatus();
-  }, [activeTab]);
+    fetchSavedProperties();
+  }, [activeTab, user, toast]);
 
-  const removeSavedProperty = (id: string) => {
-    setSavedProperties(prev => prev.filter(property => property.id !== id));
+  const removeSavedProperty = async (id: string) => {
+    if (!user) return;
     
-    toast({
-      title: "Property removed",
-      description: "This property has been removed from your saved list.",
-    });
+    try {
+      const { error } = await supabase
+        .from('saved_properties')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('property_id', id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setSavedProperties(prev => prev.filter(property => property.id !== id));
+      
+      toast({
+        title: "Property removed",
+        description: "This property has been removed from your saved list.",
+      });
+    } catch (error) {
+      console.error('Error removing saved property:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove property from saved list.',
+        variant: 'destructive',
+      });
+    }
   };
+
+  const addToFavorites = async (id: string) => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'You must be signed in to save properties.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('saved_properties')
+        .insert([
+          { user_id: user.id, property_id: id }
+        ]);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Added to favorites",
+        description: "This property has been added to your favorites.",
+      });
+      
+      // Refresh the favorites list
+      if (activeTab === 'favorites') {
+        setActiveTab('recent');
+        setTimeout(() => setActiveTab('favorites'), 10);
+      }
+    } catch (error) {
+      console.error('Error adding to favorites:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add property to favorites.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="container flex-grow flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -98,7 +195,7 @@ const Saved = () => {
       <div className="container py-12">
         <h1 className="mb-6 text-3xl font-bold md:text-4xl">Saved Properties</h1>
         
-        {isLoggedIn ? (
+        {user ? (
           <>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="mb-8">
@@ -107,14 +204,14 @@ const Saved = () => {
               </TabsList>
               
               <TabsContent value="favorites">
-                {mockSavedProperties.length > 0 ? (
+                {savedProperties.length > 0 ? (
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {savedProperties.map(property => (
                       <PropertyCard 
                         key={property.id} 
                         property={property} 
                         isFavorite={true} 
-                        onToggleFavorite={removeSavedProperty}
+                        onToggleFavorite={() => removeSavedProperty(property.id)}
                       />
                     ))}
                   </div>
@@ -124,7 +221,10 @@ const Saved = () => {
                     <p className="mb-6 text-muted-foreground">
                       You haven't added any properties to your favorites yet.
                     </p>
-                    <Button asChild>
+                    <Button 
+                      className="bg-decor-gold hover:bg-decor-gold/90"
+                      asChild
+                    >
                       <a href="/buy">Browse Properties</a>
                     </Button>
                   </div>
@@ -132,27 +232,25 @@ const Saved = () => {
               </TabsContent>
               
               <TabsContent value="recent">
-                {mockRecentViews.length > 0 ? (
+                {recentViews.length > 0 ? (
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {savedProperties.map(property => (
-                      <PropertyCard 
-                        key={property.id} 
-                        property={property}
-                        isFavorite={mockSavedProperties.some(p => p.id === property.id)} 
-                        onToggleFavorite={id => {
-                          // If already in favorites, remove it
-                          if (mockSavedProperties.some(p => p.id === id)) {
-                            removeSavedProperty(id);
-                          } else {
-                            // Otherwise, we'd add to favorites in a real app
-                            toast({
-                              title: "Added to favorites",
-                              description: "This property has been added to your favorites.",
-                            });
-                          }
-                        }}
-                      />
-                    ))}
+                    {recentViews.map(property => {
+                      const isFavorite = savedProperties.some(p => p.id === property.id);
+                      return (
+                        <PropertyCard 
+                          key={property.id} 
+                          property={property}
+                          isFavorite={isFavorite} 
+                          onToggleFavorite={() => {
+                            if (isFavorite) {
+                              removeSavedProperty(property.id);
+                            } else {
+                              addToFavorites(property.id);
+                            }
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed p-8 text-center">
@@ -160,7 +258,10 @@ const Saved = () => {
                     <p className="mb-6 text-muted-foreground">
                       You haven't viewed any properties recently.
                     </p>
-                    <Button asChild>
+                    <Button 
+                      className="bg-decor-gold hover:bg-decor-gold/90"
+                      asChild
+                    >
                       <a href="/buy">Browse Properties</a>
                     </Button>
                   </div>
@@ -183,6 +284,14 @@ const Saved = () => {
             <AlertTitle>Please sign in to view your saved properties</AlertTitle>
             <AlertDescription>
               You need to be logged in to view your saved properties and recently viewed listings.
+              <div className="mt-4">
+                <Button 
+                  onClick={() => navigate('/')}
+                  className="bg-decor-gold hover:bg-decor-gold/90"
+                >
+                  Sign In
+                </Button>
+              </div>
             </AlertDescription>
           </Alert>
         )}

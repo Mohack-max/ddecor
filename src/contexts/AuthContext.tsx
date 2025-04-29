@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 type AuthContextType = {
   session: Session | null;
@@ -19,11 +20,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log('Auth state changed:', event);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
@@ -61,10 +64,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', userId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+      
       setProfile(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching profile:', error);
+      toast({
+        title: 'Profile Error',
+        description: 'Could not load user profile data.',
+        variant: 'destructive'
+      });
       setProfile(null);
     }
   };
@@ -76,7 +88,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: 'Signed out',
+        description: 'You have been successfully signed out.'
+      });
+    } catch (error: any) {
+      console.error('Error signing out:', error);
+      toast({
+        title: 'Sign out failed',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
   };
 
   const value = {

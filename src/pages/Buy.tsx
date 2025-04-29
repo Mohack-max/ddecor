@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PropertyGrid from '@/components/PropertyGrid';
@@ -21,11 +21,98 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Buy = () => {
-  // Mock properties data
-  const allProperties: Property[] = [
+  const { toast } = useToast();
+  const [allProperties, setAllProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Filter states
+  const [priceRange, setPriceRange] = useState([0, 6000000]);
+  const [propertyType, setPropertyType] = useState<string | null>(null);
+  const [location, setLocation] = useState<string>("");
+  const [bedrooms, setBedrooms] = useState<string | null>(null);
+  const [bathrooms, setBathrooms] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState("featured");
+  
+  // Fetch properties from database
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setIsLoading(true);
+      
+      try {
+        let query = supabase
+          .from('property_listings')
+          .select('*');
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Transform database results to Property type
+          const mappedProperties: Property[] = data.map(item => ({
+            id: item.id,
+            title: item.title,
+            type: item.property_type,
+            location: item.location,
+            price: item.price,
+            bedrooms: item.bedrooms,
+            bathrooms: item.bathrooms,
+            area: item.area,
+            imageUrl: getRandomImage(item.property_type)
+          }));
+          
+          setAllProperties(mappedProperties);
+        }
+      } catch (error) {
+        console.error('Error fetching properties:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load property listings.',
+          variant: 'destructive',
+        });
+        
+        // Fall back to mock data if database fetch fails
+        setAllProperties(getMockProperties());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProperties();
+  }, [toast]);
+  
+  // Function to get random image URL based on property type
+  const getRandomImage = (propertyType: string) => {
+    const images = {
+      'House': [
+        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=2065&auto=format&fit=crop',
+      ],
+      'Villa': [
+        'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop',
+      ],
+      'Flat': [
+        'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=2070&auto=format&fit=crop',
+      ],
+      'Land': [
+        'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2232&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?q=80&w=1974&auto=format&fit=crop',
+      ],
+    };
+    
+    const typeImages = images[propertyType as keyof typeof images] || images['House'];
+    return typeImages[Math.floor(Math.random() * typeImages.length)];
+  };
+  
+  // Fallback mock data
+  const getMockProperties = (): Property[] => [
     {
       id: '1',
       title: 'Luxury Oceanfront Villa',
@@ -112,24 +199,35 @@ const Buy = () => {
     },
   ];
 
-  // Filter states
-  const [priceRange, setPriceRange] = useState([0, 6000000]);
-  const [propertyType, setPropertyType] = useState<string | null>(null);
-  const [location, setLocation] = useState<string>("");
-  const [bedrooms, setBedrooms] = useState<string | null>(null);
-  const [bathrooms, setBathrooms] = useState<string | null>(null);
-
   // Apply filters
   const filteredProperties = allProperties.filter(property => {
     const matchesPrice = property.price >= priceRange[0] && property.price <= priceRange[1];
     const matchesType = propertyType === null || property.type === propertyType;
-    const matchesLocation = location === "" || property.location.includes(location);
+    const matchesLocation = location === "" || property.location.toLowerCase().includes(location.toLowerCase());
     const matchesBedrooms = bedrooms === null || 
       (property.bedrooms && property.bedrooms >= parseInt(bedrooms));
     const matchesBathrooms = bathrooms === null || 
       (property.bathrooms && property.bathrooms >= parseInt(bathrooms));
     
     return matchesPrice && matchesType && matchesLocation && matchesBedrooms && matchesBathrooms;
+  });
+  
+  // Sort properties
+  const sortedProperties = [...filteredProperties].sort((a, b) => {
+    switch (sortOrder) {
+      case 'price-asc':
+        return a.price - b.price;
+      case 'price-desc':
+        return b.price - a.price;
+      case 'newest':
+        // In a real app, you'd sort by creation date
+        // Here we'll just use the ID as a proxy for "newest"
+        return a.id < b.id ? 1 : -1;
+      case 'featured':
+      default:
+        // Random sort for featured
+        return 0.5 - Math.random();
+    }
   });
 
   // Format price for display
@@ -151,7 +249,7 @@ const Buy = () => {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop)' }}
         >
-          <div className="absolute inset-0 hero-gradient"></div>
+          <div className="absolute inset-0 bg-black/50"></div>
         </div>
         
         <div className="container relative z-10 flex h-full flex-col items-center justify-center space-y-6 text-center text-white">
@@ -286,32 +384,40 @@ const Buy = () => {
           
           {/* Properties Grid */}
           <div className="md:col-span-3">
-            <div className="mb-6 flex flex-col justify-between md:flex-row md:items-center">
-              <h2 className="text-2xl font-semibold">
-                {filteredProperties.length} {filteredProperties.length === 1 ? 'Property' : 'Properties'} Found
-              </h2>
-              <Select defaultValue="featured">
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Sort By" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="featured">Featured</SelectItem>
-                  <SelectItem value="price-asc">Price (Low to High)</SelectItem>
-                  <SelectItem value="price-desc">Price (High to Low)</SelectItem>
-                  <SelectItem value="newest">Newest Listed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {filteredProperties.length > 0 ? (
-              <PropertyGrid properties={filteredProperties} />
-            ) : (
-              <div className="rounded-lg border border-dashed p-8 text-center">
-                <h3 className="mb-2 text-xl font-semibold">No properties found</h3>
-                <p className="text-muted-foreground">
-                  Try adjusting your filters to find properties.
-                </p>
+            {isLoading ? (
+              <div className="flex justify-center items-center h-60">
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
+            ) : (
+              <>
+                <div className="mb-6 flex flex-col justify-between md:flex-row md:items-center">
+                  <h2 className="text-2xl font-semibold">
+                    {sortedProperties.length} {sortedProperties.length === 1 ? 'Property' : 'Properties'} Found
+                  </h2>
+                  <Select defaultValue="featured" onValueChange={setSortOrder}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                      <SelectValue placeholder="Sort By" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="featured">Featured</SelectItem>
+                      <SelectItem value="price-asc">Price (Low to High)</SelectItem>
+                      <SelectItem value="price-desc">Price (High to Low)</SelectItem>
+                      <SelectItem value="newest">Newest Listed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {sortedProperties.length > 0 ? (
+                  <PropertyGrid properties={sortedProperties} />
+                ) : (
+                  <div className="rounded-lg border border-dashed p-8 text-center">
+                    <h3 className="mb-2 text-xl font-semibold">No properties found</h3>
+                    <p className="text-muted-foreground">
+                      Try adjusting your filters to find properties.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

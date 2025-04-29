@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,6 +25,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DocumentUpload } from './DocumentUpload';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
@@ -38,6 +41,10 @@ const formSchema = z.object({
 
 const PropertyForm = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -49,25 +56,50 @@ const PropertyForm = () => {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const { error } = await supabase
-      .from('property_listings')
-      .insert([{
-        ...values,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-      }]);
-
-    if (error) {
+    if (!user) {
       toast({
-        title: 'Error',
-        description: 'Failed to create listing. Please try again.',
+        title: 'Authentication required',
+        description: 'You must be signed in to list a property.',
         variant: 'destructive',
       });
-    } else {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('property_listings')
+        .insert([{
+          ...values,
+          user_id: user.id,
+        }])
+        .select();
+
+      if (error) throw error;
+
       toast({
         title: 'Success',
         description: 'Property listing created successfully!',
       });
+      
       form.reset();
+      
+      // Navigate to the property page or user listings
+      if (data && data[0]) {
+        navigate(`/property/${data[0].id}`);
+      } else {
+        navigate('/profile');
+      }
+    } catch (error: any) {
+      console.error('Error creating listing:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create listing. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -204,7 +236,18 @@ const PropertyForm = () => {
 
         <DocumentUpload />
 
-        <Button type="submit" className="w-full">List Property</Button>
+        <Button 
+          type="submit" 
+          className="w-full bg-decor-gold hover:bg-decor-gold/90"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Submitting...
+            </>
+          ) : 'List Property'}
+        </Button>
       </form>
     </Form>
   );
