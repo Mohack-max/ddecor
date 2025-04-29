@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-const RoomDesigner = () => {
+interface RoomDesignerProps {
+  onDesignChange?: (data: any) => void;
+}
+
+const RoomDesigner: React.FC<RoomDesignerProps> = ({ onDesignChange }) => {
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [roomType, setRoomType] = useState('living');
@@ -31,7 +35,16 @@ const RoomDesigner = () => {
     },
   });
 
-  const handleSaveDesign = async () => {
+  // Notify parent component when design changes
+  useEffect(() => {
+    if (onDesignChange) {
+      onDesignChange(designData);
+    }
+  }, [designData, onDesignChange]);
+
+  const handleSaveDesign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!name) {
       toast({
         title: 'Error',
@@ -41,27 +54,59 @@ const RoomDesigner = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from('room_designs')
-      .insert([{
-        name,
-        room_type: roomType,
-        design_data: designData,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-      }]);
-
-    if (error) {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) {
       toast({
         title: 'Error',
-        description: 'Failed to save design. Please try again.',
+        description: 'You must be logged in to save designs',
         variant: 'destructive',
       });
-    } else {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('room_designs')
+        .insert([{
+          name,
+          room_type: roomType,
+          design_data: designData,
+          user_id: user.id,
+        }]);
+      
+      if (error) throw error;
+      
       toast({
         title: 'Success',
         description: 'Design saved successfully!',
       });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save design',
+        variant: 'destructive',
+      });
     }
+  };
+
+  const handleColorChange = (colorType: 'walls' | 'floor' | 'ceiling', value: string) => {
+    setDesignData(prev => ({
+      ...prev,
+      colors: {
+        ...prev.colors,
+        [colorType]: value
+      }
+    }));
+  };
+
+  const handleDimensionChange = (dimension: 'width' | 'length' | 'height', value: number) => {
+    setDesignData(prev => ({
+      ...prev,
+      dimensions: {
+        ...prev.dimensions,
+        [dimension]: value
+      }
+    }));
   };
 
   return (
@@ -110,10 +155,7 @@ const RoomDesigner = () => {
                   id="wall-color"
                   type="color"
                   value={designData.colors.walls}
-                  onChange={(e) => setDesignData({
-                    ...designData,
-                    colors: { ...designData.colors, walls: e.target.value }
-                  })}
+                  onChange={(e) => handleColorChange('walls', e.target.value)}
                 />
               </div>
               <div>
@@ -122,10 +164,7 @@ const RoomDesigner = () => {
                   id="floor-color"
                   type="color"
                   value={designData.colors.floor}
-                  onChange={(e) => setDesignData({
-                    ...designData,
-                    colors: { ...designData.colors, floor: e.target.value }
-                  })}
+                  onChange={(e) => handleColorChange('floor', e.target.value)}
                 />
               </div>
             </div>
@@ -140,10 +179,7 @@ const RoomDesigner = () => {
                   id="width"
                   type="number"
                   value={designData.dimensions.width || ''}
-                  onChange={(e) => setDesignData({
-                    ...designData,
-                    dimensions: { ...designData.dimensions, width: Number(e.target.value) }
-                  })}
+                  onChange={(e) => handleDimensionChange('width', Number(e.target.value))}
                 />
               </div>
               <div>
@@ -152,10 +188,7 @@ const RoomDesigner = () => {
                   id="length"
                   type="number"
                   value={designData.dimensions.length || ''}
-                  onChange={(e) => setDesignData({
-                    ...designData,
-                    dimensions: { ...designData.dimensions, length: Number(e.target.value) }
-                  })}
+                  onChange={(e) => handleDimensionChange('length', Number(e.target.value))}
                 />
               </div>
               <div>
@@ -164,10 +197,7 @@ const RoomDesigner = () => {
                   id="height"
                   type="number"
                   value={designData.dimensions.height || ''}
-                  onChange={(e) => setDesignData({
-                    ...designData,
-                    dimensions: { ...designData.dimensions, height: Number(e.target.value) }
-                  })}
+                  onChange={(e) => handleDimensionChange('height', Number(e.target.value))}
                 />
               </div>
             </div>
