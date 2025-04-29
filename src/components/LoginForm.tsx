@@ -1,29 +1,81 @@
+
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-interface LoginFormProps {
-  onLogin: (email: string, password: string) => void;
-}
-const LoginForm: React.FC<LoginFormProps> = ({
-  onLogin
-}) => {
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+
+const LoginForm: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(email, password);
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Registering:", name, email, password);
-    // After registration would typically log the user in
-    onLogin(email, password);
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Account created",
+        description: "Welcome to De Decor! You can now sign in.",
+      });
+      setActiveTab('login');
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-  return <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="login">Login</TabsTrigger>
         <TabsTrigger value="register">Register</TabsTrigger>
@@ -33,7 +85,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <form onSubmit={handleLoginSubmit} className="space-y-4 pt-4">
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
+            <Input 
+              id="email" 
+              type="email" 
+              placeholder="name@example.com" 
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
+              required 
+              disabled={loading}
+            />
           </div>
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
@@ -42,10 +102,21 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 Forgot password?
               </a>
             </div>
-            <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+            <Input 
+              id="password" 
+              type="password" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              required 
+              disabled={loading}
+            />
           </div>
-          <Button type="submit" className="w-full bg-decor-gold hover:bg-decor-gold/90 rounded-full">
-            Sign In
+          <Button 
+            type="submit" 
+            className="w-full bg-decor-gold hover:bg-decor-gold/90 rounded-full"
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
       </TabsContent>
@@ -54,21 +125,50 @@ const LoginForm: React.FC<LoginFormProps> = ({
         <form onSubmit={handleRegisterSubmit} className="space-y-4 pt-4">
           <div className="grid gap-2">
             <Label htmlFor="name">Full Name</Label>
-            <Input id="name" type="text" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} required />
+            <Input 
+              id="name" 
+              type="text" 
+              placeholder="John Doe" 
+              value={name} 
+              onChange={e => setName(e.target.value)} 
+              required 
+              disabled={loading}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="register-email">Email</Label>
-            <Input id="register-email" type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
+            <Input 
+              id="register-email" 
+              type="email" 
+              placeholder="name@example.com" 
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
+              required 
+              disabled={loading}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="register-password">Password</Label>
-            <Input id="register-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+            <Input 
+              id="register-password" 
+              type="password" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              required 
+              disabled={loading}
+            />
           </div>
-          <Button type="submit" className="w-full bg-decor-gold hover:bg-decor-gold/90">
-            Create Account
+          <Button 
+            type="submit" 
+            className="w-full bg-decor-gold hover:bg-decor-gold/90"
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Create Account'}
           </Button>
         </form>
       </TabsContent>
-    </Tabs>;
+    </Tabs>
+  );
 };
+
 export default LoginForm;

@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -16,15 +17,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 const Settings = () => {
   const { toast } = useToast();
+  const { user, profile, loading, refreshProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
+  const navigate = useNavigate();
+  const [isSaving, setIsSaving] = useState(false);
   
   // Form states
-  const [name, setName] = useState('John Doe');
-  const [email, setEmail] = useState('john.doe@example.com');
-  const [phone, setPhone] = useState('+1 (555) 123-4567');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [language, setLanguage] = useState('en');
   const [currency, setCurrency] = useState('usd');
   const [notifications, setNotifications] = useState({
@@ -35,12 +42,59 @@ const Settings = () => {
   });
   const [darkMode, setDarkMode] = useState(false);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  // Load profile data
+  useEffect(() => {
+    if (profile) {
+      setName(profile.full_name || '');
+      setEmail(user?.email || '');
+      setPhone(profile.phone || '');
+    }
+  }, [profile, user]);
+  
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Profile updated",
-      description: "Your profile has been updated successfully."
-    });
+    setIsSaving(true);
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: name,
+          phone: phone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user?.id);
+        
+      if (error) throw error;
+      
+      // Update email if changed
+      if (email !== user?.email) {
+        const { error: updateError } = await supabase.auth.updateUser({ email });
+        if (updateError) throw updateError;
+      }
+      
+      await refreshProfile();
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating profile",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSavePreferences = (e: React.FormEvent) => {
@@ -50,6 +104,18 @@ const Settings = () => {
       description: "Your preferences have been updated successfully."
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="container flex-grow flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -105,14 +171,23 @@ const Settings = () => {
                   
                   <div>
                     <h3 className="mb-4 text-xl font-semibold">Password</h3>
-                    <Button variant="outline" className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full sm:w-auto" onClick={() => setActiveTab('privacy')}>
                       Change Password
                     </Button>
                   </div>
                   
                   <div className="flex justify-end">
-                    <Button type="submit" className="bg-decor-gold hover:bg-decor-gold/90">
-                      Save Changes
+                    <Button 
+                      type="submit" 
+                      className="bg-decor-gold hover:bg-decor-gold/90"
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : 'Save Changes'}
                     </Button>
                   </div>
                 </form>
@@ -220,6 +295,29 @@ const Settings = () => {
                 <h2 className="mb-4 text-2xl font-semibold">Privacy & Security</h2>
                 
                 <div className="space-y-6">
+                  <div>
+                    <h3 className="mb-3 text-xl font-semibold">Change Password</h3>
+                    <form className="space-y-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="current-password">Current Password</Label>
+                        <Input id="current-password" type="password" />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="new-password">New Password</Label>
+                        <Input id="new-password" type="password" />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="confirm-password">Confirm New Password</Label>
+                        <Input id="confirm-password" type="password" />
+                      </div>
+                      <Button className="bg-decor-gold hover:bg-decor-gold/90">
+                        Update Password
+                      </Button>
+                    </form>
+                  </div>
+                  
+                  <Separator />
+                  
                   <div>
                     <h3 className="mb-3 text-xl font-semibold">Security Settings</h3>
                     <div className="space-y-3">

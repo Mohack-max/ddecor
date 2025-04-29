@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
@@ -14,16 +14,29 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import LoginForm from './LoginForm';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar: React.FC = () => {
   const isMobile = useIsMobile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
 
-  // Mock login function - to be replaced with real authentication
-  const handleLogin = (email: string, password: string) => {
-    console.log("Logging in with:", email, password);
-    setIsLoggedIn(true);
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const getInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name.split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+    }
+    return user?.email?.charAt(0).toUpperCase() || 'U';
   };
 
   return (
@@ -56,13 +69,15 @@ const Navbar: React.FC = () => {
         )}
 
         <div className="flex items-center gap-4">
-          {isLoggedIn ? (
+          {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src="/placeholder.svg" alt="User" />
-                    <AvatarFallback className="bg-decor-gold text-white">UD</AvatarFallback>
+                    <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} alt={profile?.full_name || "User"} />
+                    <AvatarFallback className="bg-decor-gold text-white">
+                      {getInitials()}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -79,11 +94,11 @@ const Navbar: React.FC = () => {
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsLoggedIn(false)}>Sign out</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Dialog>
+            <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="default" size="sm" className="bg-decor-gold hover:bg-decor-gold/90">
                   Sign In
@@ -93,7 +108,7 @@ const Navbar: React.FC = () => {
                 <DialogHeader>
                   <DialogTitle className="text-center text-2xl">Welcome Back</DialogTitle>
                 </DialogHeader>
-                <LoginForm onLogin={handleLogin} />
+                <LoginForm />
               </DialogContent>
             </Dialog>
           )}
@@ -160,6 +175,25 @@ const Navbar: React.FC = () => {
             <Link to="/saved" className="text-sm font-medium transition-colors hover:text-primary" onClick={() => setIsMenuOpen(false)}>
               Saved
             </Link>
+            {user && (
+              <>
+                <Link to="/profile" className="text-sm font-medium transition-colors hover:text-primary" onClick={() => setIsMenuOpen(false)}>
+                  Profile
+                </Link>
+                <Link to="/settings" className="text-sm font-medium transition-colors hover:text-primary" onClick={() => setIsMenuOpen(false)}>
+                  Settings
+                </Link>
+                <button 
+                  onClick={() => {
+                    handleSignOut();
+                    setIsMenuOpen(false);
+                  }} 
+                  className="text-sm font-medium text-left text-destructive"
+                >
+                  Sign Out
+                </button>
+              </>
+            )}
           </nav>
         </div>
       )}

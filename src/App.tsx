@@ -12,27 +12,32 @@ import Sell from "./pages/Sell";
 import Design from "./pages/Design";
 import Saved from "./pages/Saved";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/buy" element={<Buy />} />
-          <Route path="/sell" element={<Sell />} />
-          <Route path="/design" element={<Design />} />
-          <Route path="/saved" element={<Saved />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/buy" element={<Buy />} />
+            <Route path="/sell" element={<Sell />} />
+            <Route path="/design" element={<Design />} />
+            <Route path="/saved" element={<Saved />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
