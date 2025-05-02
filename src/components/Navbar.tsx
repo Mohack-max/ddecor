@@ -72,10 +72,10 @@ const Navbar: React.FC = () => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full bg-gray-500">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} alt={profile?.full_name || "User"} />
-                    <AvatarFallback className="bg-gray-500 text-white">
+                    <AvatarFallback className="bg-decor-gold text-white">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
