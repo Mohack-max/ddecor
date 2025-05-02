@@ -52,7 +52,7 @@ const LoginForm: React.FC = () => {
         .from('profiles')
         .select('email')
         .eq('email', email)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single
 
       if (fetchError) {
         throw fetchError;
