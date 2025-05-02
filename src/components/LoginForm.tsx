@@ -34,7 +34,7 @@ const LoginForm: React.FC = () => {
     } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error.message,
+        description: error.message + " Please check your mail first if you have created your account recently !",
         variant: "destructive",
       });
     } finally {
