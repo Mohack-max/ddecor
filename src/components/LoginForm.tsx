@@ -47,7 +47,28 @@ const LoginForm: React.FC = () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({
+      // Check if the email already exists
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      if (existingUser) {
+        toast({
+          title: "Account already exists",
+          description: "Please use another email to create an account.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Proceed with registration if the account does not exist
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -56,13 +77,16 @@ const LoginForm: React.FC = () => {
           },
         },
       });
-      
-      if (error) throw error;
-      
+
+      if (signUpError) {
+        throw signUpError;
+      }
+
       toast({
         title: "Account created",
-        description: "Welcome to De Decor! You can now sign in.",
+        description: "Welcome to De Decor! Please check your email for verification. Then, you can log in.",
       });
+
       setActiveTab('login');
     } catch (error: any) {
       toast({
