@@ -75,7 +75,7 @@ const Navbar: React.FC = () => {
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={profile?.avatar_url || "/placeholder.svg"} alt={profile?.full_name || "User"} />
-                    <AvatarFallback className="bg-decor-gold text-white">
+                    <AvatarFallback className="bg-gray-500 text-white">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
