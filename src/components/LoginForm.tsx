@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -10,23 +9,29 @@ import { useToast } from '@/hooks/use-toast';
 const LoginForm: React.FC = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  
+  // Separate state for login and register
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [registerName, setRegisterName] = useState('');
+
   const [loading, setLoading] = useState(false);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+        email: loginEmail,
+        password: loginPassword,
       });
-      
+
       if (error) throw error;
-      
+
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
@@ -34,58 +39,36 @@ const LoginForm: React.FC = () => {
     } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error.message + " Please check your mail first if you have created your account recently !",
+        description: error.message + " Please verify your email first if you just signed up!",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
-  
+
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
-      // Check if the email already exists
-      const { data: existingUser, error: fetchError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', email);
-  
-      if (fetchError) {
-        throw fetchError;
-      }
-  
-      if (existingUser && existingUser.length > 0) { // Ensure existingUser is checked properly
-        toast({
-          title: "Account already exists",
-          description: "Please use another email to create an account.",
-          variant: "destructive",
-        });
-        return;
-      }
-  
-      // Proceed with registration if the account does not exist
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: registerEmail,
+        password: registerPassword,
         options: {
           data: {
-            full_name: name,
+            full_name: registerName,
           },
         },
       });
-  
-      if (signUpError) {
-        throw signUpError;
-      }
-  
+
+      if (signUpError) throw signUpError;
+
       toast({
         title: "Account created",
-        description: "Welcome to De Decor! Please check your email for verification. Then, you can log in.",
+        description: "Check your email to verify your account before logging in.",
       });
-  
+
       setActiveTab('login');
     } catch (error: any) {
       toast({
@@ -104,18 +87,19 @@ const LoginForm: React.FC = () => {
         <TabsTrigger value="login">Login</TabsTrigger>
         <TabsTrigger value="register">Register</TabsTrigger>
       </TabsList>
-      
+
+      {/* LOGIN */}
       <TabsContent value="login">
         <form onSubmit={handleLoginSubmit} className="space-y-4 pt-4">
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="name@example.com" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              required 
+            <Input
+              id="email"
+              type="email"
+              placeholder="name@example.com"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              required
               disabled={loading}
             />
           </div>
@@ -126,17 +110,17 @@ const LoginForm: React.FC = () => {
                 Forgot password?
               </a>
             </div>
-            <Input 
-              id="password" 
-              type="password" 
-              value={password} 
-              onChange={e => setPassword(e.target.value)} 
-              required 
+            <Input
+              id="password"
+              type="password"
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
+              required
               disabled={loading}
             />
           </div>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="w-full bg-decor-gold hover:bg-decor-gold/90 rounded-full"
             disabled={loading}
           >
@@ -144,46 +128,47 @@ const LoginForm: React.FC = () => {
           </Button>
         </form>
       </TabsContent>
-      
+
+      {/* REGISTER */}
       <TabsContent value="register">
         <form onSubmit={handleRegisterSubmit} className="space-y-4 pt-4">
           <div className="grid gap-2">
             <Label htmlFor="name">Full Name</Label>
-            <Input 
-              id="name" 
-              type="text" 
-              placeholder="John Doe" 
-              value={name} 
-              onChange={e => setName(e.target.value)} 
-              required 
+            <Input
+              id="name"
+              type="text"
+              placeholder="John Doe"
+              value={registerName}
+              onChange={(e) => setRegisterName(e.target.value)}
+              required
               disabled={loading}
             />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="register-email">Email</Label>
-            <Input 
-              id="register-email" 
-              type="email" 
-              placeholder="name@example.com" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              required 
+            <Input
+              id="register-email"
+              type="email"
+              placeholder="name@example.com"
+              value={registerEmail}
+              onChange={(e) => setRegisterEmail(e.target.value)}
+              required
               disabled={loading}
             />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="register-password">Password</Label>
-            <Input 
-              id="register-password" 
-              type="password" 
-              value={password} 
-              onChange={e => setPassword(e.target.value)} 
-              required 
+            <Input
+              id="register-password"
+              type="password"
+              value={registerPassword}
+              onChange={(e) => setRegisterPassword(e.target.value)}
+              required
               disabled={loading}
             />
           </div>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="w-full bg-decor-gold hover:bg-decor-gold/90"
             disabled={loading}
           >
