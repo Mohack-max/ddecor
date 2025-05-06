@@ -31,7 +31,7 @@ const FeaturedProperties: React.FC = () => {
       title: 'Modern Downtown Flat',
       type: 'Flat',
       location: 'Mumbai, India', // Updated locality
-      price: formatPrice(1950000), // Format price
+      price: 1950000, // Price in INR
       bedrooms: 2,
       bathrooms: 2,
       area: 1200,

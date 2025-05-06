@@ -142,7 +142,7 @@ const PropertyForm = () => {
               <FormItem>
                 <FormLabel>Price</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="Price in USD" {...field} />
+                  <Input type="number" placeholder="Price in INR" {...field} /> // Updated placeholder
                 </FormControl>
                 <FormMessage />
               </FormItem>
