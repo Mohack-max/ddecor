@@ -31,7 +31,11 @@ import { Loader2 } from 'lucide-react';
 const formSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   description: z.string().min(20, 'Description must be at least 20 characters'),
-  price: z.string().transform(Number),
+  price: z.string().transform((val) => {
+    const num = Number(val);
+    if (isNaN(num)) throw new Error('Price must be a number');
+    return num;
+  }),
   location: z.string().min(3, 'Location is required'),
   property_type: z.string(),
   bedrooms: z.string().transform(Number).optional(),
@@ -142,7 +146,7 @@ const PropertyForm = () => {
               <FormItem>
                 <FormLabel>Price</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="Price in INR" {...field} /> // Updated placeholder
+                  <Input type="number" placeholder="Price in INR" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
