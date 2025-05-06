@@ -4,14 +4,23 @@ import { Property } from './PropertyCard';
 import PropertyGrid from './PropertyGrid';
 
 const FeaturedProperties: React.FC = () => {
+  // Function to format price
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
+
   // Mock data for featured properties
   const featuredProperties: Property[] = [
     {
       id: '1',
       title: 'Luxury Oceanfront Villa',
       type: 'Villa',
-      location: 'Malibu, CA',
-      price: 4500000,
+      location: 'Goa, India', // Updated locality
+      price: formatPrice(4500000), // Format price
       bedrooms: 5,
       bathrooms: 6,
       area: 4200,
@@ -21,8 +30,8 @@ const FeaturedProperties: React.FC = () => {
       id: '2',
       title: 'Modern Downtown Flat',
       type: 'Flat',
-      location: 'New York, NY',
-      price: 1950000,
+      location: 'Mumbai, India', // Updated locality
+      price: formatPrice(1950000), // Format price
       bedrooms: 2,
       bathrooms: 2,
       area: 1200,
@@ -32,8 +41,8 @@ const FeaturedProperties: React.FC = () => {
       id: '3',
       title: 'Countryside Estate',
       type: 'House',
-      location: 'Hamptons, NY',
-      price: 3750000,
+      location: 'Bangalore, India', // Updated locality
+      price: formatPrice(3750000), // Format price
       bedrooms: 6,
       bathrooms: 5,
       area: 5800,
@@ -43,8 +52,8 @@ const FeaturedProperties: React.FC = () => {
       id: '4',
       title: 'Beachfront Property',
       type: 'Land',
-      location: 'Miami, FL',
-      price: 2300000,
+      location: 'Chennai, India', // Updated locality
+      price: formatPrice(2300000), // Format price
       area: 12000,
       imageUrl: 'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?q=80&w=1974&auto=format&fit=crop'
     }
