@@ -117,7 +117,7 @@ const Buy = () => {
       id: '1',
       title: 'Luxury Oceanfront Villa',
       type: 'Villa',
-      location: 'Malibu, CA',
+      location: 'Guntur ',
       price: 4500000,
       bedrooms: 5,
       bathrooms: 6,
@@ -128,7 +128,7 @@ const Buy = () => {
       id: '2',
       title: 'Modern Downtown Flat',
       type: 'Flat',
-      location: 'New York, NY',
+      location: 'Vijayawada ',
       price: 1950000,
       bedrooms: 2,
       bathrooms: 2,
@@ -139,7 +139,7 @@ const Buy = () => {
       id: '3',
       title: 'Countryside Estate',
       type: 'House',
-      location: 'Hamptons, NY',
+      location: 'Guntur, India',
       price: 3750000,
       bedrooms: 6,
       bathrooms: 5,
@@ -150,7 +150,7 @@ const Buy = () => {
       id: '4',
       title: 'Beachfront Property',
       type: 'Land',
-      location: 'Miami, FL',
+      location: 'Gujarat',
       price: 2300000,
       area: 12000,
       imageUrl: 'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?q=80&w=1974&auto=format&fit=crop'
@@ -159,7 +159,7 @@ const Buy = () => {
       id: '5',
       title: 'Mountain View Chalet',
       type: 'House',
-      location: 'Aspen, CO',
+      location: 'Guntur ',
       price: 2800000,
       bedrooms: 4,
       bathrooms: 3,
@@ -170,7 +170,7 @@ const Buy = () => {
       id: '6',
       title: 'Urban Penthouse',
       type: 'Flat',
-      location: 'Chicago, IL',
+      location: 'Delhi, India',
       price: 3200000,
       bedrooms: 3,
       bathrooms: 3,
@@ -181,7 +181,7 @@ const Buy = () => {
       id: '7',
       title: 'Waterfront Land',
       type: 'Land',
-      location: 'Seattle, WA',
+      location: 'Mangalagiri, WA',
       price: 1850000,
       area: 9600,
       imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2232&auto=format&fit=crop'
@@ -190,7 +190,7 @@ const Buy = () => {
       id: '8',
       title: 'Tuscan Style Villa',
       type: 'Villa',
-      location: 'Napa Valley, CA',
+      location: 'Guntur, CA',
       price: 5100000,
       bedrooms: 6,
       bathrooms: 7,
@@ -284,7 +284,7 @@ const Buy = () => {
                       <Slider
                         defaultValue={[0, 6000000]}
                         max={6000000}
-                        step={100000}
+                        step={1000}
                         value={priceRange}
                         onValueChange={setPriceRange}
                         className="my-4"
@@ -408,7 +408,10 @@ const Buy = () => {
                 </div>
                 
                 {sortedProperties.length > 0 ? (
-                  <PropertyGrid properties={sortedProperties} />
+                  <PropertyGrid properties={sortedProperties.map(property => ({
+                    ...property,
+                    price: formatPrice(property.price)
+                  }))} />
                 ) : (
                   <div className="rounded-lg border border-dashed p-8 text-center">
                     <h3 className="mb-2 text-xl font-semibold">No properties found</h3>
