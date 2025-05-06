@@ -1,147 +1,215 @@
-"use client";
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
+const LoginForm: React.FC = () => {
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('login');
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-export function AuthForm() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState("login");
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [registerName, setRegisterName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
       });
+
+      console.log('LOGIN response:', data);
 
       if (error) throw error;
 
-      toast.success("Logged in successfully");
-      router.refresh(); // or router.push("/dashboard") if you want redirect
-    } catch (err: any) {
-      toast.error(err.message || "Login failed");
+      if (!data.session) {
+        throw new Error('No active session found. Please verify your email first.');
+      }
+
+      toast({
+        title: 'Welcome back!',
+        description: 'You have successfully logged in.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Login failed',
+        description: error.message.includes('Invalid') || error.message.includes('Email not confirmed')
+          ? 'Invalid credentials or email not verified.'
+          : error.message,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: registerEmail,
+        password: registerPassword,
         options: {
           data: {
-            full_name: name,
+            full_name: registerName,
           },
         },
       });
 
-      if (error) throw error;
+      console.log('REGISTER response:', data);
 
-      toast.success("Account created. Check your email to verify.");
-      setActiveTab("login");
-    } catch (err: any) {
-      toast.error(err.message || "Registration failed");
+      if (signUpError) throw signUpError;
+
+      toast({
+        title: 'Account created',
+        description: 'Check your email to verify your account before logging in.',
+      });
+
+      setActiveTab('login');
+    } catch (error: any) {
+      toast({
+        title: 'Registration failed',
+        description: error.message.includes('already registered')
+          ? 'Account already exists with this email.'
+          : error.message,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto mt-10">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="login">Login</TabsTrigger>
-          <TabsTrigger value="register">Register</TabsTrigger>
-        </TabsList>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="login">Login</TabsTrigger>
+        <TabsTrigger value="register">Register</TabsTrigger>
+      </TabsList>
 
-        {/* LOGIN */}
-        <TabsContent value="login">
-          <form onSubmit={handleLogin} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+      <TabsContent value="login">
+        <form onSubmit={handleLoginSubmit} className="space-y-4 pt-4">
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="name@example.com"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-primary"
+                onClick={async () => {
+                  if (!loginEmail) {
+                    toast({
+                      title: 'Enter your email first',
+                      description: 'We need your email to reset the password.',
+                      variant: 'destructive',
+                    });
+                    return;
+                  }
+                  const { error } = await supabase.auth.resetPasswordForEmail(loginEmail);
+                  if (error) {
+                    toast({
+                      title: 'Reset failed',
+                      description: error.message,
+                      variant: 'destructive',
+                    });
+                  } else {
+                    toast({
+                      title: 'Password reset sent',
+                      description: 'Check your inbox for the reset link.',
+                    });
+                  }
+                }}
+              >
+                Forgot password?
+              </button>
             </div>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <Input
-                type="password"
-                placeholder="Your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
-            </Button>
-          </form>
-        </TabsContent>
+            <Input
+              id="password"
+              type="password"
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+          <Button
+            type="submit"
+            className="w-full bg-decor-gold hover:bg-decor-gold/90 rounded-full"
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
+          </Button>
+        </form>
+      </TabsContent>
 
-        {/* REGISTER */}
-        <TabsContent value="register">
-          <form onSubmit={handleRegister} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>Full Name</Label>
-              <Input
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <Input
-                type="password"
-                placeholder="Your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Register"}
-            </Button>
-          </form>
-        </TabsContent>
-      </Tabs>
-    </div>
+      <TabsContent value="register">
+        <form onSubmit={handleRegisterSubmit} className="space-y-4 pt-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="John Doe"
+              value={registerName}
+              onChange={(e) => setRegisterName(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="register-email">Email</Label>
+            <Input
+              id="register-email"
+              type="email"
+              placeholder="name@example.com"
+              value={registerEmail}
+              onChange={(e) => setRegisterEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="register-password">Password</Label>
+            <Input
+              id="register-password"
+              type="password"
+              value={registerPassword}
+              onChange={(e) => setRegisterPassword(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+          <Button
+            type="submit"
+            className="w-full bg-decor-gold hover:bg-decor-gold/90"
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Create Account'}
+          </Button>
+        </form>
+      </TabsContent>
+    </Tabs>
   );
-}
+};
+
+export default LoginForm;
