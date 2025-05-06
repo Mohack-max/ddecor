@@ -201,7 +201,7 @@ const Profile = () => {
                           <p className="text-sm text-muted-foreground">{property.location}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">${property.price.toLocaleString()}</p>
+                          <p className="font-medium">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(property.price)}</p>
                           <Button 
                             size="sm" 
                             variant="outline"

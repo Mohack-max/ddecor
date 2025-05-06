@@ -323,6 +323,7 @@ const Settings = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="usd">USD ($)</SelectItem>
+                          <SelectItem value="inr">INR (₹)</SelectItem>
                           <SelectItem value="eur">EUR (€)</SelectItem>
                           <SelectItem value="gbp">GBP (£)</SelectItem>
                           <SelectItem value="jpy">JPY (¥)</SelectItem>

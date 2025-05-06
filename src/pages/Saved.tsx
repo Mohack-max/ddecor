@@ -209,7 +209,10 @@ const Saved = () => {
                     {savedProperties.map(property => (
                       <PropertyCard 
                         key={property.id} 
-                        property={property} 
+                        property={{
+                          ...property,
+                          price: new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(property.price)
+                        }} 
                         isFavorite={true} 
                         onToggleFavorite={() => removeSavedProperty(property.id)}
                       />
