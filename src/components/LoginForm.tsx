@@ -49,8 +49,8 @@ const LoginForm: React.FC = () => {
     try {
       // Check if the email already exists
       const normalizedEmail = email.toLowerCase(); // Always lowercase input
-
-      const { data: existingUser, error: fetchError } = await supabase
+  
+      const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('email')
         .eq('email', normalizedEmail)
@@ -60,7 +60,7 @@ const LoginForm: React.FC = () => {
         throw fetchError;
       }
       
-      if (existingUser) {
+      if (data) { // Corrected to use existingUser
         toast({
           title: "Account already exists",
           description: "Please use another email to create an account.",
