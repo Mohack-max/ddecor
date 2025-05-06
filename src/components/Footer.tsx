@@ -38,8 +38,8 @@ const Footer: React.FC = () => {
             <address className="not-italic text-muted-foreground">
               <p>1234 Luxury Lane</p>
               <p>Mumbai, Maharashtra 400001</p> <!-- Updated locality -->
-              <p className="mt-2">Toll-free: 1800-123-4567</p> <!-- Updated contact number -->
-              <p>Email: info@dedecor.com</p>
+              <p className="mt-2">Contact Number : +91 7866921605</p> 
+              <p>Email: kroy8331@gmail.com</p>
             </address>
           </div>
         </div>
