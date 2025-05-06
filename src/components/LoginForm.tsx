@@ -50,21 +50,19 @@ const LoginForm: React.FC = () => {
       // Check if the email already exists
       const normalizedEmail = email.toLowerCase(); // Always lowercase input
   
-      // const data = await supabase
-      //   .from('profiles')
-      //   .select('email')
-      //   .eq('email', normalizedEmail)
-      //   .maybeSingle(); // Avoids error when no row found
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      // if (data) { // Corrected to use existingUser
-      //   alert(JSON.stringify(data));
-      //   toast({
-      //     title: "Account already exists",
-      //     description: "Please use another email to create an account.",
-      //     variant: "destructive",
-      //   });
-      //   return;
-      // }
+      if (!error) { // Corrected to use existingUser
+        toast({
+          title: "Account already exists",
+          description: "You have been logged in automatically!",
+          variant: "default",
+        });
+        return;
+      }
       
       
 

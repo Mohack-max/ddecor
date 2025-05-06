@@ -5,7 +5,7 @@ import { Separator } from './ui/separator';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-muted/30 py-8">
+    <footer className="bg-muted py-8">
       <div className="container">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div>
@@ -35,10 +35,10 @@ const Footer: React.FC = () => {
 
           <div>
             <h4 className="mb-4 font-medium">Contact</h4>
-            <address className="not-italic text-muted-foreground">
+            <address className="text-muted-foreground">
               <p>1234 Luxury Lane</p>
-              <p>Mumbai, Maharashtra 400001</p> <!-- Updated locality -->
-              <p className="mt-2">Contact Number : +91 7866921605</p> 
+              <p>Mumbai, Maharashtra 400001</p>
+              <p className="mt-2">Contact Number : +91 7866921605</p>
               <p>Email: kroy8331@gmail.com</p>
             </address>
           </div>
