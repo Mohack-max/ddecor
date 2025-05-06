@@ -48,15 +48,15 @@ const LoginForm: React.FC = () => {
     
     try {
       // Check if the email already exists
-      const normalizedEmail = email.toLowerCase(); // Normalize email to lowercase
+      const normalizedEmail = email.toLowerCase(); // Always lowercase input
 
       const { data: existingUser, error: fetchError } = await supabase
         .from('profiles')
         .select('email')
         .eq('email', normalizedEmail)
-        .single();
+        .maybeSingle(); // Avoids error when no row found
       
-      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (fetchError) {
         throw fetchError;
       }
       
@@ -68,6 +68,7 @@ const LoginForm: React.FC = () => {
         });
         return;
       }
+      
       
 
       // Proceed with registration if the account does not exist
