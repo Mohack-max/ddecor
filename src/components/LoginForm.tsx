@@ -48,16 +48,18 @@ const LoginForm: React.FC = () => {
     
     try {
       // Check if the email already exists
+      const normalizedEmail = email.toLowerCase(); // Normalize email to lowercase
+
       const { data: existingUser, error: fetchError } = await supabase
         .from('profiles')
         .select('email')
-        .eq('email', email)
+        .eq('email', normalizedEmail)
         .single();
-
-      if (fetchError) {
+      
+      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
         throw fetchError;
       }
-
+      
       if (existingUser) {
         toast({
           title: "Account already exists",
@@ -66,6 +68,7 @@ const LoginForm: React.FC = () => {
         });
         return;
       }
+      
 
       // Proceed with registration if the account does not exist
       const { error: signUpError } = await supabase.auth.signUp({
@@ -156,7 +159,7 @@ const LoginForm: React.FC = () => {
               placeholder="John Doe" 
               value={name} 
               onChange={e => setName(e.target.value)} 
-              required 
+              required     
               disabled={loading}
             />
           </div>
