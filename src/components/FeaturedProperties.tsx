@@ -19,8 +19,8 @@ const FeaturedProperties: React.FC = () => {
       id: '1',
       title: 'Luxury Oceanfront Villa',
       type: 'Villa',
-      location: 'Goa, India', // Updated locality
-      price: formatPrice(4500000), // Format price
+      location: 'Goa, India',
+      price: formatPrice(4500000),
       bedrooms: 5,
       bathrooms: 6,
       area: 4200,
@@ -30,8 +30,8 @@ const FeaturedProperties: React.FC = () => {
       id: '2',
       title: 'Modern Downtown Flat',
       type: 'Flat',
-      location: 'Mumbai, India', // Updated locality
-      price: 1950000, // Price in INR
+      location: 'Mumbai, India',
+      price: formatPrice(1950000),
       bedrooms: 2,
       bathrooms: 2,
       area: 1200,
@@ -41,8 +41,8 @@ const FeaturedProperties: React.FC = () => {
       id: '3',
       title: 'Countryside Estate',
       type: 'House',
-      location: 'Bangalore, India', // Updated locality
-      price: formatPrice(3750000), // Format price
+      location: 'Bangalore, India',
+      price: formatPrice(3750000),
       bedrooms: 6,
       bathrooms: 5,
       area: 5800,
@@ -52,12 +52,14 @@ const FeaturedProperties: React.FC = () => {
       id: '4',
       title: 'Beachfront Property',
       type: 'Land',
-      location: 'Chennai, India', // Updated locality
-      price: formatPrice(2300000), // Format price
+      location: 'Chennai, India',
+      price: formatPrice(2300000),
       area: 12000,
       imageUrl: 'https://images.unsplash.com/photo-1544984243-ec57ea16fe25?q=80&w=1974&auto=format&fit=crop'
     }
   ];
+
+  console.log('Featured Properties:', featuredProperties); // Debugging line
 
   return (
     <section className="container py-16">

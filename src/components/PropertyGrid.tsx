@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PropertyCard, { Property } from './PropertyCard';
 
@@ -9,14 +8,12 @@ interface PropertyGridProps {
 const PropertyGrid: React.FC<PropertyGridProps> = ({ properties }) => {
   const [favorites, setFavorites] = useState<string[]>([]);
 
-  const toggleFavorite = (id: string) => {
-    setFavorites(prevFavorites => {
-      if (prevFavorites.includes(id)) {
-        return prevFavorites.filter(fav => fav !== id);
-      } else {
-        return [...prevFavorites, id];
-      }
-    });
+  const toggleFavorite = (propertyId: string) => {
+    setFavorites(prev =>
+      prev.includes(propertyId)
+        ? prev.filter(id => id !== propertyId)
+        : [...prev, propertyId]
+    );
   };
 
   return (
@@ -24,9 +21,9 @@ const PropertyGrid: React.FC<PropertyGridProps> = ({ properties }) => {
       {properties.map((property) => (
         <PropertyCard 
           key={property.id} 
-          property={property} 
+          property={property}
           isFavorite={favorites.includes(property.id)}
-          onToggleFavorite={toggleFavorite}
+          onToggleFavorite={() => toggleFavorite(property.id)}
         />
       ))}
     </div>

@@ -66,7 +66,9 @@ const Buy = () => {
             imageUrl: getRandomImage(item.property_type)
           }));
           
-          setAllProperties(mappedProperties);
+          
+           //setAllProperties(mappedProperties);
+           setAllProperties(getMockProperties());
         }
       } catch (error) {
         console.error('Error fetching properties:', error);

@@ -28,8 +28,8 @@ const Footer: React.FC = () => {
             <h4 className="mb-4 font-medium">Company</h4>
             <ul className="space-y-2 text-muted-foreground">
               <li><Link to="/about" className="hover:text-primary">About Us</Link></li>
-              <li><Link to="/contact" className="hover:text-primary">Contact Us</Link></li>
-              <li><Link to="/careers" className="hover:text-primary">Careers</Link></li>
+              {/* <li><Link to="/contact" className="hover:text-primary">Contact Us</Link></li> */}
+              {/* <li><Link to="/careers" className="hover:text-primary">Careers</Link></li> */}
             </ul>
           </div>
 
