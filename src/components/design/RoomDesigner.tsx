@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import * as THREE from 'three';
 
 interface RoomDesignerProps {
   onDesignChange?: (data: any) => void;
@@ -35,57 +36,58 @@ const RoomDesigner: React.FC<RoomDesignerProps> = ({ onDesignChange }) => {
     },
   });
 
-  // Notify parent component when design changes
+  const mountRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (onDesignChange) {
       onDesignChange(designData);
     }
   }, [designData, onDesignChange]);
 
-  const handleSaveDesign = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name) {
-      toast({
-        title: 'Error',
-        description: 'Please enter a name for your design',
-        variant: 'destructive',
-      });
-      return;
-    }
+  useEffect(() => {
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(400, 400);
+    mountRef.current?.appendChild(renderer.domElement);
 
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
-      toast({
-        title: 'Error',
-        description: 'You must be logged in to save designs',
-        variant: 'destructive',
-      });
-      return;
-    }
+    let cube: THREE.Mesh;
 
-    try {
-      const { error } = await supabase
-        .from('room_designs')
-        .insert([{
-          name,
-          room_type: roomType,
-          design_data: designData,
-          user_id: user.id,
-        }]);
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Success',
-        description: 'Design saved successfully!',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to save design',
-        variant: 'destructive',
-      });
+    const createCube = () => {
+      const geometry = new THREE.BoxGeometry(designData.dimensions.width, designData.dimensions.height, designData.dimensions.length);
+      const material = new THREE.MeshBasicMaterial({ color: designData.colors.walls });
+      cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
+    };
+
+    createCube();
+
+    camera.position.z = 5;
+
+    const animate = function () {
+      requestAnimationFrame(animate);
+      cube.rotation.x += 0.01;
+      cube.rotation.y += 0.01;
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    return () => {
+      mountRef.current?.removeChild(renderer.domElement);
+    };
+  }, [designData]); // Ensure useEffect runs when designData changes
+
+  const handleDimensionChange = (dimension: 'width' | 'length' | 'height', value: string) => {
+    const numericValue = parseFloat(value);
+    if (!isNaN(numericValue)) {
+      setDesignData(prev => ({
+        ...prev,
+        dimensions: {
+          ...prev.dimensions,
+          [dimension]: numericValue
+        }
+      }));
     }
   };
 
@@ -99,23 +101,13 @@ const RoomDesigner: React.FC<RoomDesignerProps> = ({ onDesignChange }) => {
     }));
   };
 
-  const handleDimensionChange = (dimension: 'width' | 'length' | 'height', value: number) => {
-    setDesignData(prev => ({
-      ...prev,
-      dimensions: {
-        ...prev.dimensions,
-        [dimension]: value
-      }
-    }));
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-secondary/20 rounded-lg p-6">
-          {/* This is where the 3D room preview would go */}
-          <div className="aspect-video bg-secondary rounded-lg flex items-center justify-center">
-            <p className="text-muted-foreground">Room Preview</p>
+          {/* Render the room preview */}
+          <div ref={mountRef} className="bg-secondary rounded-lg flex items-center justify-center" style={{ width: '400px', height: '400px' }}>
+            <p className="text-muted-foreground"></p>
           </div>
         </div>
 
@@ -179,7 +171,7 @@ const RoomDesigner: React.FC<RoomDesignerProps> = ({ onDesignChange }) => {
                   id="width"
                   type="number"
                   value={designData.dimensions.width || ''}
-                  onChange={(e) => handleDimensionChange('width', Number(e.target.value))}
+                  onChange={(e) => handleDimensionChange('width', e.target.value)}
                 />
               </div>
               <div>
@@ -188,7 +180,7 @@ const RoomDesigner: React.FC<RoomDesignerProps> = ({ onDesignChange }) => {
                   id="length"
                   type="number"
                   value={designData.dimensions.length || ''}
-                  onChange={(e) => handleDimensionChange('length', Number(e.target.value))}
+                  onChange={(e) => handleDimensionChange('length', e.target.value)}
                 />
               </div>
               <div>
@@ -197,7 +189,7 @@ const RoomDesigner: React.FC<RoomDesignerProps> = ({ onDesignChange }) => {
                   id="height"
                   type="number"
                   value={designData.dimensions.height || ''}
-                  onChange={(e) => handleDimensionChange('height', Number(e.target.value))}
+                  onChange={(e) => handleDimensionChange('height', e.target.value)}
                 />
               </div>
             </div>
@@ -210,6 +202,63 @@ const RoomDesigner: React.FC<RoomDesignerProps> = ({ onDesignChange }) => {
       </div>
     </div>
   );
+};
+
+const handleSaveDesign = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  if (!name) {
+    toast({
+      title: 'Error',
+      description: 'Please enter a name for your design',
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  const user = (await supabase.auth.getUser()).data.user;
+  if (!user) {
+    toast({
+      title: 'Error',
+      description: 'You must be logged in to save designs',
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('room_designs')
+      .insert([{
+        name,
+        room_type: roomType,
+        design_data: designData,
+        user_id: user.id,
+      }]);
+    
+    if (error) throw error;
+    
+    toast({
+      title: 'Success',
+      description: 'Design saved successfully!',
+    });
+  } catch (error: any) {
+    toast({
+      title: 'Error',
+      description: error.message || 'Failed to save design',
+      variant: 'destructive',
+    });
+  }
+};
+
+const handleColorChange = (colorType: 'walls' | 'floor' | 'ceiling', value: string) => {
+  setDesignData(prev => ({
+    ...prev,
+    colors: {
+      ...prev.colors,
+      [colorType]: value
+    }
+  }));
 };
 
 export default RoomDesigner;
