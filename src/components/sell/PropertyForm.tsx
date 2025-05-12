@@ -90,11 +90,26 @@ const PropertyForm = () => {
       form.reset();
       
      
-      if (data && data[0]) {
-        navigate(`/property/${data[0].id}`);
-      } else {
-        navigate('/profile');
-      }
+      const onSubmit = async (values: FormValues) => {
+        try {
+          const { data, error } = await supabase
+            .from('property_listings')
+            .insert([values])
+            .select();
+
+          if (error) throw error;
+
+          // Ensure the data contains the necessary information for navigation
+          if (data && data[0]) {
+            navigate(`/property/${data[0].id}`); // Ensure this path is correct
+          } else {
+            navigate('/profile'); // Fallback path
+          }
+        } catch (error) {
+          console.error('Error creating listing:', error);
+          // Handle error
+        }
+      };
     } catch (error: any) {
       console.error('Error creating listing:', error);
       toast({
@@ -258,3 +273,23 @@ const PropertyForm = () => {
 };
 
 export default PropertyForm;
+
+
+const uploadFile = async (file: File) => {
+  try {
+    const { data, error } = await supabase.storage
+      .from('property-documents') // Ensure this matches your actual bucket name
+      .upload(`${file.name}`, file); // Upload directly to the bucket without a folder path
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    toast({
+      title: 'Upload Error',
+      description: error.message || 'Failed to upload file. Please try again.',
+      variant: 'destructive',
+    });
+  }
+};

@@ -19,26 +19,12 @@ export const DocumentUpload = () => {
       if (!user) return;
       
       try {
-        
-        const { data: imageData, error: imageError } = await supabase
-          .storage
-          .from('property-images')
-          .list(`${user.id}/`);
-          
-        
         const { data: docData, error: docError } = await supabase
           .storage
           .from('property-documents')
           .list(`${user.id}/`);
           
-        if (imageError) throw imageError;
         if (docError) throw docError;
-        
-        const imageFiles = imageData?.map(file => ({
-          name: file.name,
-          url: supabase.storage.from('property-images').getPublicUrl(`${user.id}/${file.name}`).data.publicUrl,
-          type: 'image'
-        })) || [];
         
         const docFiles = docData?.map(file => ({
           name: file.name,
@@ -46,7 +32,7 @@ export const DocumentUpload = () => {
           type: 'document'
         })) || [];
         
-        setFiles([...imageFiles, ...docFiles]);
+        setFiles(docFiles);
       } catch (error) {
         console.error('Error fetching uploaded files:', error);
       }
@@ -76,26 +62,22 @@ export const DocumentUpload = () => {
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
       
-      
-      const isImage = file.type.startsWith('image/');
-      const bucketName = isImage ? 'property-images' : 'property-documents';
-
       const { error: uploadError } = await supabase.storage
-        .from(bucketName)
+        .from('property-documents')
         .upload(filePath, file);
-
+    
       if (uploadError) {
         throw uploadError;
       }
-
+    
       const { data } = supabase.storage
-        .from(bucketName)
+        .from('property-documents')
         .getPublicUrl(filePath);
-
+    
       setFiles([...files, { 
         name: file.name, 
         url: data.publicUrl,
-        type: isImage ? 'image' : 'document'
+        type: 'document'
       }]);
       
       toast({

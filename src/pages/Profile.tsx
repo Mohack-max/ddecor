@@ -19,23 +19,17 @@ const Profile = () => {
   const [savedProperties, setSavedProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user properties and saved properties
   useEffect(() => {
     const loadUserData = async () => {
       if (!user) return;
-      
       setIsLoading(true);
-      
       try {
         // Fetch properties listed by the user
         const { data: userListings, error: listingsError } = await supabase
           .from('property_listings')
           .select('*')
           .eq('user_id', user.id);
-          
         if (listingsError) throw listingsError;
-        
-        // Transform to Property type
         const mappedListings = userListings.map(listing => ({
           id: listing.id,
           title: listing.title,
@@ -47,9 +41,7 @@ const Profile = () => {
           area: listing.area,
           imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070&auto=format&fit=crop'
         }));
-        
         setListedProperties(mappedListings);
-        
         // Fetch saved properties
         const { data: savedProps, error: savedError } = await supabase
           .from('saved_properties')
@@ -58,11 +50,8 @@ const Profile = () => {
             property_listings (*)
           `)
           .eq('user_id', user.id);
-          
         if (savedError) throw savedError;
-        
         if (savedProps && savedProps.length > 0) {
-          // Transform to Property type
           const mappedSaved = savedProps.map((saved: any) => ({
             id: saved.property_listings.id,
             title: saved.property_listings.title,
@@ -74,7 +63,6 @@ const Profile = () => {
             area: saved.property_listings.area,
             imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop'
           }));
-          
           setSavedProperties(mappedSaved);
         }
       } catch (error) {
@@ -83,7 +71,6 @@ const Profile = () => {
         setIsLoading(false);
       }
     };
-    
     loadUserData();
   }, [user]);
 
@@ -116,24 +103,23 @@ const Profile = () => {
         .delete()
         .eq('user_id', user.id)
         .eq('property_id', propertyId);
-        
       if (error) throw error;
-      
-      // Update the local state
       setSavedProperties(prevSaved => prevSaved.filter(property => property.id !== propertyId));
     } catch (error) {
       console.error('Error removing saved property:', error);
     }
   };
 
+  const handleViewProperty = (propertyId: string) => {
+    navigate(`/property/${propertyId}`);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
       <div className="container py-12">
         <div className="mx-auto max-w-6xl">
           <h1 className="mb-6 text-3xl font-bold md:text-4xl">My Profile</h1>
-          
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {/* Profile Card */}
             <Card className="md:col-span-1 bg-card">
@@ -166,7 +152,6 @@ const Profile = () => {
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
                 </div>
-                
                 <div className="pt-4 flex flex-col gap-4">
                   <Button 
                     onClick={() => navigate('/settings')} 
@@ -185,7 +170,6 @@ const Profile = () => {
                 </div>
               </CardContent>
             </Card>
-            
             {/* Activity Card */}
             <Card className="md:col-span-2">
               <CardHeader>
@@ -205,7 +189,7 @@ const Profile = () => {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => navigate(`/property/${property.id}`)}
+                            onClick={() => handleViewProperty(property.id)}
                           >
                             View
                           </Button>
@@ -235,8 +219,7 @@ const Profile = () => {
                 )}
               </CardContent>
             </Card>
-            
-            {}
+            {/* Saved Properties */}
             <Card className="md:col-span-3">
               <CardHeader>
                 <CardTitle>Saved Properties</CardTitle>
@@ -270,7 +253,6 @@ const Profile = () => {
           </div>
         </div>
       </div>
-      
       <Footer />
     </div>
   );
