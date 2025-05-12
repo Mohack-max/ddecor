@@ -89,7 +89,7 @@ const PropertyForm = () => {
       
       form.reset();
       
-      // Navigate to the property page or user listings
+     
       if (data && data[0]) {
         navigate(`/property/${data[0].id}`);
       } else {

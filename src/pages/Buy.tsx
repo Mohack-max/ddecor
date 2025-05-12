@@ -30,7 +30,7 @@ const Buy = () => {
   const [allProperties, setAllProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Filter states
+
   const [priceRange, setPriceRange] = useState([0, 6000000]);
   const [propertyType, setPropertyType] = useState<string | null>(null);
   const [location, setLocation] = useState<string>("");
@@ -38,7 +38,7 @@ const Buy = () => {
   const [bathrooms, setBathrooms] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState("featured");
   
-  // Fetch properties from database
+ 
   useEffect(() => {
     const fetchProperties = async () => {
       setIsLoading(true);
@@ -53,7 +53,7 @@ const Buy = () => {
         if (error) throw error;
         
         if (data) {
-          // Transform database results to Property type
+          
           const mappedProperties: Property[] = data.map(item => ({
             id: item.id,
             title: item.title,
@@ -67,7 +67,7 @@ const Buy = () => {
           }));
           
           
-           //setAllProperties(mappedProperties);
+         
            setAllProperties(getMockProperties());
         }
       } catch (error) {
@@ -78,7 +78,7 @@ const Buy = () => {
           variant: 'destructive',
         });
         
-        // Fall back to mock data if database fetch fails
+       
         setAllProperties(getMockProperties());
       } finally {
         setIsLoading(false);
@@ -88,7 +88,7 @@ const Buy = () => {
     fetchProperties();
   }, [toast]);
   
-  // Function to get random image URL based on property type
+
   const getRandomImage = (propertyType: string) => {
     const images = {
       'House': [
@@ -201,7 +201,7 @@ const Buy = () => {
     },
   ];
 
-  // Apply filters
+  
   const filteredProperties = allProperties.filter(property => {
     const matchesPrice = property.price >= priceRange[0] && property.price <= priceRange[1];
     const matchesType = propertyType === null || property.type === propertyType;
@@ -214,7 +214,7 @@ const Buy = () => {
     return matchesPrice && matchesType && matchesLocation && matchesBedrooms && matchesBathrooms;
   });
   
-  // Sort properties
+ 
   const sortedProperties = [...filteredProperties].sort((a, b) => {
     switch (sortOrder) {
       case 'price-asc':
@@ -222,12 +222,12 @@ const Buy = () => {
       case 'price-desc':
         return b.price - a.price;
       case 'newest':
-        // In a real app, you'd sort by creation date
-        // Here we'll just use the ID as a proxy for "newest"
+       
+       
         return a.id < b.id ? 1 : -1;
       case 'featured':
       default:
-        // Random sort for featured
+       
         return 0.5 - Math.random();
     }
   });
@@ -245,7 +245,7 @@ const Buy = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      {/* Hero Section */}
+      {}
       <div className="relative h-64 w-full overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"

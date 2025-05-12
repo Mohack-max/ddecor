@@ -105,7 +105,7 @@ const RoomDesigner: React.FC<RoomDesignerProps> = ({ onDesignChange }) => {
     <div className="max-w-4xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-secondary/20 rounded-lg p-6">
-          {/* Render the room preview */}
+          {}
           <div ref={mountRef} className="bg-secondary rounded-lg flex items-center justify-center" style={{ width: '400px', height: '400px' }}>
             <p className="text-muted-foreground"></p>
           </div>

@@ -14,18 +14,18 @@ export const DocumentUpload = () => {
   const [files, setFiles] = useState<{ name: string; url: string; type: string }[]>([]);
 
   useEffect(() => {
-    // Load any previously uploaded files
+
     const fetchUploadedFiles = async () => {
       if (!user) return;
       
       try {
-        // For images
+        
         const { data: imageData, error: imageError } = await supabase
           .storage
           .from('property-images')
           .list(`${user.id}/`);
           
-        // For documents
+        
         const { data: docData, error: docError } = await supabase
           .storage
           .from('property-documents')
@@ -76,7 +76,7 @@ export const DocumentUpload = () => {
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
       
-      // Determine if it's an image or document
+      
       const isImage = file.type.startsWith('image/');
       const bucketName = isImage ? 'property-images' : 'property-documents';
 
@@ -124,7 +124,7 @@ export const DocumentUpload = () => {
     try {
       setUploading(true);
       
-      // Extract file path from URL
+      
       const urlParts = fileUrl.split('/');
       const filePath = `${user.id}/${urlParts[urlParts.length - 1]}`;
       

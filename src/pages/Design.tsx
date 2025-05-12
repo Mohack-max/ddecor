@@ -36,7 +36,7 @@ const Design = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   
-  // Save room design to Supabase
+ 
   const handleSaveDesign = async () => {
     if (!user) {
       toast({
@@ -89,8 +89,7 @@ const Design = () => {
       setIsSaving(false);
     }
   };
-  
-  // Update the design data when the room designer changes
+
   const handleDesignChange = (data: any) => {
     setDesignData(data);
   };

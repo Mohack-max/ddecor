@@ -236,7 +236,7 @@ const Profile = () => {
               </CardContent>
             </Card>
             
-            {/* Saved Properties */}
+            {}
             <Card className="md:col-span-3">
               <CardHeader>
                 <CardTitle>Saved Properties</CardTitle>

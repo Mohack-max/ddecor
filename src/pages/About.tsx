@@ -19,7 +19,7 @@ const About = () => {
         </div>
       </div>
       
-      {/* Story Section */}
+      {}
       <section className="container py-12">
         <div className="grid gap-12 md:grid-cols-2 md:items-center">
           <div>
@@ -44,7 +44,7 @@ const About = () => {
         </div>
       </section>
       
-      {/* Mission & Values */}
+      {}
       <section className="bg-secondary py-16">
         <div className="container">
           <h2 className="mb-12 text-center text-3xl font-bold">Our Mission & Values</h2>
@@ -71,7 +71,7 @@ const About = () => {
         </div>
       </section>
       
-      {/* Team Section */}
+      {}
       <section className="container py-16">
         <h2 className="mb-12 text-center text-3xl font-bold">Our Leadership Team</h2>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
