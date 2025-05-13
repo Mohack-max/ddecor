@@ -12,32 +12,27 @@ export const DocumentUpload = () => {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<{ name: string; url: string; type: string }[]>([]);
+  const [phoneNumber, setPhoneNumber] = useState(''); // New state for phone number
 
   useEffect(() => {
-
     const fetchUploadedFiles = async () => {
       if (!user) return;
-      
       try {
         const { data: docData, error: docError } = await supabase
           .storage
           .from('property-documents')
           .list(`${user.id}/`);
-          
         if (docError) throw docError;
-        
         const docFiles = docData?.map(file => ({
           name: file.name,
           url: supabase.storage.from('property-documents').getPublicUrl(`${user.id}/${file.name}`).data.publicUrl,
           type: 'document'
         })) || [];
-        
         setFiles(docFiles);
       } catch (error) {
         console.error('Error fetching uploaded files:', error);
       }
     };
-    
     fetchUploadedFiles();
   }, [user]);
 
@@ -80,6 +75,16 @@ export const DocumentUpload = () => {
         type: 'document'
       }]);
       
+      // Update the property listing with the phone number
+      const { error: updateError } = await supabase
+        .from('property_listings')
+        .update({ phoneNumber })
+        .eq('user_id', user.id);
+      
+      if (updateError) {
+        throw updateError;
+      }
+
       toast({
         title: 'Success',
         description: 'File uploaded successfully!',
@@ -89,45 +94,6 @@ export const DocumentUpload = () => {
       toast({
         title: 'Error',
         description: error.message || 'Error uploading file.',
-        variant: 'destructive',
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const removeFile = async (index: number, fileUrl: string) => {
-    if (!user) return;
-    
-    const file = files[index];
-    const isImage = file.type === 'image';
-    const bucketName = isImage ? 'property-images' : 'property-documents';
-    
-    try {
-      setUploading(true);
-      
-      
-      const urlParts = fileUrl.split('/');
-      const filePath = `${user.id}/${urlParts[urlParts.length - 1]}`;
-      
-      const { error } = await supabase
-        .storage
-        .from(bucketName)
-        .remove([filePath]);
-        
-      if (error) throw error;
-      
-      setFiles(files.filter((_, i) => i !== index));
-      
-      toast({
-        title: 'File removed',
-        description: 'File was removed successfully.',
-      });
-    } catch (error: any) {
-      console.error('Remove file error:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Error removing file.',
         variant: 'destructive',
       });
     } finally {
@@ -163,6 +129,20 @@ export const DocumentUpload = () => {
           className="hidden"
           accept="image/*,.pdf,.doc,.docx"
           onChange={handleFileUpload}
+        />
+      </div>
+
+      {/* New input field for phone number */}
+      <div className="space-y-2">
+        <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700">
+          Contact Phone Number
+        </label>
+        <input
+          id="phone-number"
+          type="text"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
         />
       </div>
 

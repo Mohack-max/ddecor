@@ -203,6 +203,7 @@ const Profile = () => {
                         <div>
                           <h3 className="font-medium">{property.title}</h3>
                           <p className="text-sm text-muted-foreground">{property.location}</p>
+                          <p className="text-sm text-muted-foreground">Contact: {property.phoneNumber}</p> {/* Display phone number */}
                         </div>
                         <div className="text-right">
                           <p className="font-medium">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(property.price)}</p>

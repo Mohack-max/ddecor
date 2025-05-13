@@ -407,13 +407,28 @@ const Buy = () => {
                       <SelectItem value="newest">Newest Listed</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                
-                {sortedProperties.length > 0 ? (
-                  <PropertyGrid properties={sortedProperties.map(property => ({
-                    ...property,
-                    price: formatPrice(property.price)
-                  }))} />
+                </div>                               {sortedProperties.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {sortedProperties.map(property => (
+                      <div key={property.id} className="relative group">
+                        <img
+                          src={property.imageUrl}
+                          alt={property.title}
+                          className="w-full h-48 object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <p className="text-white text-sm">
+                            Contact: {property.phoneNumber || '+91 7866921605'} {/* Display phone number */}
+                          </p>
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-medium">{property.title}</h3>
+                          <p className="text-sm text-muted-foreground">{property.location}</p>
+                          <p className="font-medium">{formatPrice(property.price)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="rounded-lg border border-dashed p-8 text-center">
                     <h3 className="mb-2 text-xl font-semibold">No properties found</h3>
@@ -427,7 +442,6 @@ const Buy = () => {
           </div>
         </div>
       </div>
-      
       <Footer />
     </div>
   );
